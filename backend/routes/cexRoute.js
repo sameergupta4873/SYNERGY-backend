@@ -1,4 +1,4 @@
-const {getMarketData,getTransactions, detectAnomaly, filterTransactions} =require('../controllers/cexController')
+const {getMarketData,getTransactions, detectAnomaly, filterTransactions, showTransitiveTransactions} =require('../controllers/cexController')
 const { isAuthenticatedUser, authorizeRoles } = require("../middleware/auth");
 const express = require("express");
 const router = express.Router();
@@ -8,5 +8,5 @@ router.route("/getTransactions").get(getTransactions);
 router.route("/detectAnomaly").get(detectAnomaly);
 // filterTransactions
 router.route("/filterTransactions").get(filterTransactions);
-
+router.route("/showTransitiveTransactions").get(showTransitiveTransactions);
 module.exports = router;

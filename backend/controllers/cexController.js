@@ -1,6 +1,7 @@
 const errorHandler = require("../utils/errorHandler");
 const catchAsyncErrors = require("../middleware/catchAsyncErrors");
 const axios = require("axios");
+const { transitiveClosure } = require('./transitiveClosure');
 
 const BASE_URL = 'https://api.binance.com/api/v3/ticker'
 
@@ -643,6 +644,120 @@ exports.filterTransactions = async (req, res, next) => {
         res.status(200).json({ results });
     } catch (error) {
         console.error("Error filtering transactions:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+};
+exports.showTransitiveTransactions = async (req, res, next) => {
+    try {
+        // Retrieve transactions from the database or external API
+        const response={
+            "status": "1",
+            "message": "OK",
+            "result": [
+                {
+                    "blockNumber": "4259813",
+                    "timeStamp": "1708689943",
+                    "hash": "0x607eaeeb27afe0e5bacaf020488476844ab9abcfaceafaf2cff458510de23a04",
+                    "nonce": "464",
+                    "blockHash": "0x0050d9ad58a59c894a18cf47e28e81b9ea980d2c7d46f8552f00ae3a6d5c14fc",
+                    "transactionIndex": "31",
+                    "from": "0x98c5c9dc6dd44d6dc07cbac11df9e0f38594cf42",
+                    "to": "0xbb0ea877a85df253ccc312b80c644da31443abfd",
+                    "value": "91841178427085834",
+                    "gas": "21000",
+                    "gasPrice": "21834513098",
+                    "isError": "0",
+                    "txreceipt_status": "",
+                    "input": "0x",
+                    "contractAddress": "",
+                    "cumulativeGasUsed": "1237380",
+                    "gasUsed": "21000",
+                    "confirmations": "15036508",
+                    "methodId": "0x",
+                    "functionName": ""
+                },
+                {
+                    "blockNumber": "4259822",
+                    "timeStamp": "1708689944",
+                    "hash": "0x2df037ae6da450e371ac56ec715598ee7275e491f94adb493be913f47638cab1",
+                    "nonce": "0",
+                    "blockHash": "0xf1d043750a2950ec270bee3f0f79c89d92d652576b1dfb92f00af2b63de2056a",
+                    "transactionIndex": "26",
+                    "from": "0xbb0ea877a85df253ccc312b80c644da31443abfd",
+                    "to": "0xbb0ea877a85df253ccc312b80c644da31443abfe",
+                    "value": "1000000000000000",
+                    "gas": "250000",
+                    "gasPrice": "4000000000",
+                    "isError": "0",
+                    "txreceipt_status": "",
+                    "input": "0x095ea7b30000000000000000000000008d12a197cb00d4747a1fe03395095ce2a5cc681900000000000000000000000000000000000000000000000000000000000002f7",
+                    "contractAddress": "",
+                    "cumulativeGasUsed": "1221371",
+                    "gasUsed": "45206",
+                    "confirmations": "15036499",
+                    "methodId": "0x095ea7b3",
+                    "functionName": "approve(address _spender, uint256 _value)"
+                },
+                {
+                    "blockNumber": "4259822",
+                    "timeStamp": "1708689945",
+                    "hash": "0xa9e0d6907374a8ca0075cec56c694cc61cbd4c5b49fa12fc30a306c23f34616e",
+                    "nonce": "1",
+                    "blockHash": "0xf1d043750a2950ec270bee3f0f79c89d92d652576b1dfb92f00af2b63de2056a",
+                    "transactionIndex": "30",
+                    "from": "0xbb0ea877a85df253ccc312b80c644da31443abfe",
+                    "to": "0xbb0ea877a85df253ccc312b80c644da31443abf9",
+                    "value": "10000000000000000",
+                    "gas": "250000",
+                    "gasPrice": "4000000000",
+                    "isError": "0",
+                    "txreceipt_status": "",
+                    "input": "0x338b5dea00000000000000000000000084119cb33e8f590d75c2d6ea4e6b0741a7494eda00000000000000000000000000000000000000000000000000000000000002f7",
+                    "contractAddress": "",
+                    "cumulativeGasUsed": "1587746",
+                    "gasUsed": "38357",
+                    "confirmations": "15036499",
+                    "methodId": "0x338b5dea",
+                    "functionName": "depositToken(address token, uint256 amount)"
+                },
+            ]
+        }
+        const transactions = response.result;
+        // console.log(transactions);
+        // Build directed graph
+        const graph = {};
+console.log("Number of transactions:", transactions.length); // Log the number of transactions
+
+if (transactions && Array.isArray(transactions)) {
+    transactions.forEach(function(transaction) {
+        if (!transaction || !transaction.from || !transaction.to || !transaction.hash) {
+            return; // Skip this transaction if it's null or missing 'from', 'to', or 'hash' properties
+        }
+        const fromAddress = transaction.from;
+        const toAddress = transaction.to;
+        const hash = transaction.hash;
+        if (!fromAddress || !toAddress || !hash) {
+            return; // Skip this transaction if 'from', 'to', or 'hash' properties are null or undefined
+        }
+        if (!graph.hasOwnProperty(fromAddress)) {
+            graph[fromAddress] = [];
+        }
+        // Push an object containing 'to' and 'hash' properties into the array for the 'from' address
+        graph[fromAddress].push({ to: toAddress, hash: hash });
+    });
+} else {
+    console.error("Transactions is undefined or not an array");
+}
+console.log("Constructed graph:", graph); // Log the constructed graph object
+
+// Perform transitive closure computation
+const transitiveRelations = transitiveClosure(graph);
+
+
+        // Return results
+        res.status(200).json({ transitiveRelations });
+    } catch (error) {
+        console.error("Error showing transitive transactions:", error);
         res.status(500).json({ error: "Internal server error" });
     }
 };
