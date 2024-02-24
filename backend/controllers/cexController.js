@@ -22,7 +22,19 @@ exports.getTransactions = catchAsyncErrors(async (req, res, next) => {
     const url = `https://api.etherscan.io/api?module=${module}&action=${action}&address=${address}&startblock=${startblock}&endblock=${endblock}&page=${page}&offset=${offset}&sort=asc&apikey=S86F1RHCUUZH72TMQ92N1EM1HZEAI46D3H`;
     try {
         const response = await axios.get(url);
-        res.status(200).json(response.data);
+        const result = response.data.result;
+        const { nodes, edges } = extractInfo(result);
+        const allLoops = detectAllLoops(nodes, edges);
+
+        if (allLoops.length > 0) {
+            console.log("Loops detected:", allLoops);
+        } else {
+            console.log("No loops detected");
+        }
+        res.status(200).json({
+            transactions: response.data,
+            loops: allLoops
+        });
     } catch (error) {
         console.error("Error fetching transactions:", error);
         next(error);
@@ -34,6 +46,7 @@ exports.detectAnomaly = catchAsyncErrors(async (req, res, next) => {
         const { module, action, address, startblock, endblock, page, offset } = req.body;
         const url = `https://api.etherscan.io/api?module=${module}&action=${action}&address=${address}&startblock=${startblock}&endblock=${endblock}&page=${page}&offset=${offset}&sort=asc&apikey=S86F1RHCUUZH72TMQ92N1EM1HZEAI46D3H`
         const response = await axios.get(url);
+        // console.log(response.data);
         // const response={
         //     "status": "1",
         //     "message": "OK",
@@ -260,7 +273,7 @@ exports.detectAnomaly = catchAsyncErrors(async (req, res, next) => {
         //         }
         //     ]
         // }
-        const result = response.result;
+        const result = response.data.result;
         const { nodes, edges } = extractInfo(result);
         const allLoops = detectAllLoops(nodes, edges);
 
@@ -279,11 +292,12 @@ exports.detectAnomaly = catchAsyncErrors(async (req, res, next) => {
 function extractInfo(result) {
     const nodes = new Set();
     const edges = [];
+    console.log(result);
 
     result.forEach(obj => {
         nodes.add(obj.from);
         nodes.add(obj.to);
-        edges.push([obj.from, obj.to, obj.blockNumber]);
+        edges.push([obj.from, obj.to, obj.hash]);
     });
 
     return { nodes, edges };

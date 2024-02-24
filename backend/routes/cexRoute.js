@@ -5,7 +5,7 @@ const router = express.Router();
 
 router.route("/getBinance").get(getMarketData);
 router.route("/getTransactions").post(getTransactions);
-router.route("/detectAnomaly").get(detectAnomaly);
+router.route("/detectAnomaly").post(detectAnomaly);
 // filterTransactions
 router.route("/filterTransactions").get(filterTransactions);
 router.route("/showTransitiveTransactions").get(showTransitiveTransactions);
