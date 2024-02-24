@@ -12,6 +12,8 @@ app.use(cookieParser());
 
 const user=require('./routes/userRoute');
 app.use("/api/v1",user);
+const cex=require('./routes/cexRoute');
+app.use("/api/v1",cex);
 app.use(errorMiddleware);
 
 //Middleware for error
