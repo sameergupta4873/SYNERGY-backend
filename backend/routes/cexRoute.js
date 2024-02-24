@@ -4,7 +4,7 @@ const express = require("express");
 const router = express.Router();
 
 router.route("/getBinance").get(getMarketData);
-router.route("/getTransactions").get(getTransactions);
+router.route("/getTransactions").post(getTransactions);
 router.route("/detectAnomaly").get(detectAnomaly);
 // filterTransactions
 router.route("/filterTransactions").get(filterTransactions);
