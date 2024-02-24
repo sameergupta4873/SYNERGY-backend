@@ -290,10 +290,19 @@ function extractInfo(result) {
 }
 function detectAllLoops(nodes, edges) {
     const graph = {};
-    nodes.forEach(node => graph[node] = []);
+    const edgeMap = {}; // Map to store edges based on from-to combination
 
+    // Initialize the graph with empty arrays for each node
+    nodes.forEach(node => {
+        graph[node] = [];
+    });
+
+    // Construct the graph
     edges.forEach(edge => {
-        graph[edge[0]].push(edge[1]);
+        const [from, to, hash] = edge;
+        graph[from].push(to);
+        // Store the edge in the edge map
+        edgeMap[`${from}-${to}`] = { to, hash };
     });
 
     const visited = new Set();
@@ -307,10 +316,13 @@ function detectAllLoops(nodes, edges) {
             if (!visited.has(neighbor)) {
                 dfs(neighbor, stack, node);
             } else if (stack.includes(neighbor)) {
+                // Construct the loop with edge information
                 let cycle = [];
                 let index = stack.indexOf(neighbor);
                 for (let i = index; i < stack.length; i++) {
-                    cycle.push(stack[i]);
+                    const from = stack[i];
+                    const to = stack[i + 1] || stack[0]; // Wrap around for the last node
+                    cycle.push(edgeMap[`${from}-${to}`]); // Get edge information from the edge map
                 }
                 allLoops.push(cycle);
             }
@@ -319,6 +331,7 @@ function detectAllLoops(nodes, edges) {
         stack.pop();
     }
 
+    // Perform DFS for each node
     for (const node of nodes) {
         const stack = [];
         dfs(node, stack, null);
